@@ -9,13 +9,8 @@ export class OpenaiAdapter implements LlmProviderAdapter {
   }
 
   async listModels(): Promise<OpenAI.Models.Model[]> {
-    const models: OpenAI.Models.Model[] = [];
-    let hasMore = true;
-    do {
-      const resp = await this.client.models.list();
-      models.push(...resp.data);
-      hasMore = resp.hasNextPage();
-    } while (hasMore);
+    const models = [];
+    for await (const model of this.client.models.list()) models.push(model);
     return models;
   }
 
