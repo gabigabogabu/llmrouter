@@ -1,0 +1,6 @@
+- [x] add llm providers which support openai's SDK
+- [x] list models
+- [x] chat completions
+- [ ] add anthropic SDK
+- [ ] tool use
+- [ ] add AWS hosted models
