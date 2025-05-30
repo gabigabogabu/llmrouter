@@ -1,8 +1,8 @@
 import OpenAI from "openai";
 import type { ClientOptions } from "openai";
-import type { LlmProviderAdapter } from "./LlmProviderAdapter";
+import type { LlmHostAdapter } from "./LlmHostAdapter";
 
-export class OpenaiAdapter implements LlmProviderAdapter {
+export class OpenaiAdapter implements LlmHostAdapter {
   private client: OpenAI;
   constructor(params: ClientOptions) {
     this.client = new OpenAI(params);

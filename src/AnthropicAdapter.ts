@@ -19,11 +19,11 @@ import type {
 import { Stream } from "openai/streaming.mjs";
 
 import { ModelNotFoundError, ModalityNotSupportedError } from "./errors";
-import type { LlmProviderAdapter } from "./LlmProviderAdapter";
+import type { LlmHostAdapter } from "./LlmProviderAdapter";
 
 const null2Undefined = (value: any): any => value === null ? undefined : value;
 
-export class AnthropicAdapter implements LlmProviderAdapter {
+export class AnthropicAdapter implements LlmHostAdapter {
   private client: Anthropic;
 
   constructor(params: ClientOptions) {

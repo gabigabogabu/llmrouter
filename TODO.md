@@ -2,5 +2,6 @@
 - [x] list models
 - [x] chat completions
 - [x] add anthropic SDK
+- [x] fuzz testing
 - [ ] tool use
 - [ ] add AWS hosted models

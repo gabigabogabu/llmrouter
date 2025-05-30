@@ -1,22 +1,16 @@
-import OpenAI from "openai";
+import OpenAI, { type ClientOptions } from "openai";
 
-import { OpenaiAdapter } from "./OpenaiLlmProviderAdapter";
-import { AnthropicAdapter } from "./AnthropicLlmProviderAdapter";
-import type { LlmProviderAdapter } from "./LlmProviderAdapter";
+import { AnthropicAdapter } from "./AnthropicAdapter";
+import type { LlmHostAdapter } from "./LlmHostAdapter";
+import { OpenaiAdapter } from "./OpenaiAdapter";
+import { HostNotFoundError, ModelNotFoundError } from "./errors";
 
-const providers = ["anthropic", "deepseek", "gemini", "openai", "openrouter", "xai"] as const;
-type LlmProvider = (typeof providers)[number];
-type LlmRouterClientOptions = Omit<ConstructorParameters<typeof OpenAI>, "apiKey" | "baseUrl"> & {
-  [K in LlmProvider as `${K}ApiKey`]: string | undefined;
-};
+const hosts = ["anthropic", "deepseek", "gemini", "openai", "openrouter", "xai"] as const;
+type LlmHost = (typeof hosts)[number];
+type LlmRouterClientOptions = Omit<ClientOptions, "apiKey" | "baseUrl"> & {[K in LlmHost as `${K}ApiKey`]: string | undefined;};
 
-class ProviderNotFoundError extends Error {
-  constructor(provider: string) {
-    super(`No client found for provider ${provider}`);
-  }
-}
 
-export class LlmRouter implements LlmProviderAdapter {
+export class LlmRouter implements LlmHostAdapter {
   private clients: {
     anthropic?: AnthropicAdapter;
     deepseek?: OpenaiAdapter;
@@ -45,36 +39,49 @@ export class LlmRouter implements LlmProviderAdapter {
   }
 
   /**
-   * List all models from a given provider.
-   * @param provider - The provider to list models from. If not provided, all providers will be queried.
+   * List all models from a given provider. ModelIds are returned with an additional provider prefix.
+   * @param host - The provider to list models from. If not provided, all providers will be queried.
    * @returns A list of models.
    */
-  async listModels(provider?: LlmProvider): Promise<OpenAI.Models.Model[]> {
-    if (!provider)
-      return (await Promise.allSettled(providers.map(async provider => ({provider, models: await this.listModels(provider)}))))
+  async listModels(host?: LlmHost): Promise<OpenAI.Models.Model[]> {
+    if (!host)
+      return (await Promise.allSettled(hosts.map(async host => ({host, models: await this.listModels(host)}))))
         .filter(result => result.status === "fulfilled")
-        .map(result => result.value.models.map(model => ({ ...model, id: `${result.value.provider}/${model.id}` })))
+        .map(result => result.value.models.map(model => ({ ...model, id: `${model.id}@${result.value.host}` })))
         .flat()
         .sort((a, b) => b.id.localeCompare(a.id));
 
-    return this._tryToGetClient(provider).listModels();
+    return this._tryToGetClient(host).listModels();
   }
 
   async chat(...params: Parameters<typeof OpenAI.prototype.chat.completions.create>): Promise<ReturnType<typeof OpenAI.prototype.chat.completions.create>> {
-    const [body] = params;
-    return this._tryToGetClient(body.model).chat(...params);
+    const {model, host} = this._parseModelAndHost(params[0].model);
+    params[0].model = model;
+    return this._tryToGetClient(host).chat(...params);
   }
 
   /**
    * Get the client for a given provider and model.
-   * @param providerAndModel - The provider and model to get the client for. Format "<provider>/<model>". Example: "openai/gpt-4o"
+   * @param modelIdWithHost - The provider and model to get the client for. Format "<provider>/<model>". Example: "openai/gpt-4o"
    * @returns The client for the given provider and model.
    */
-  private _tryToGetClient(providerAndModel: string): Exclude<typeof this.clients[keyof typeof this.clients], undefined> {
-    const [provider, model] = providerAndModel.split("/");
-    if (!providers.includes(provider as LlmProvider)) throw new ProviderNotFoundError(providerAndModel);
-    const client = this.clients[provider as LlmProvider];
-    if (!client) throw new ProviderNotFoundError(providerAndModel)
+  private _tryToGetClient(host: LlmHost): Exclude<typeof this.clients[keyof typeof this.clients], undefined> {
+    const client = this.clients[host];
+    if (!client) throw new HostNotFoundError(host)
     return client;
+  }
+
+  private _parseModelAndHost(modelIdWithHost: string): {model: string, host: LlmHost} {
+    const match = /^(.+)@(.+)$/.exec(modelIdWithHost);
+    if (!match) throw new HostNotFoundError(modelIdWithHost);
+    const [, model, host] = match;
+    if (!model) throw new ModelNotFoundError(modelIdWithHost);
+    if (!LlmRouter._isLlmHost(host)) throw new HostNotFoundError(modelIdWithHost);
+    return {model, host};
+  }
+
+  // type guard
+  private static _isLlmHost(host: string | undefined | null): host is LlmHost {
+    return hosts.includes(host as LlmHost);
   }
 }
