@@ -9,7 +9,7 @@ import { LlmRouter } from "../index";
 import { generateRandomSetup } from "./_generateRandomSetup";
 import path from "path";
 
-dotenv.config({path: path.join(__dirname, "../../.env.test.local")});
+dotenv.config({ path: path.join(__dirname, "../../.env.test.local") });
 
 describe("Fuzz Testing", () => {
   // Global test state
@@ -44,11 +44,11 @@ describe("Fuzz Testing", () => {
   });
 
   test.each([
-    process.env.ANTHROPIC_API_KEY && "anthropic", 
-    process.env.DEEPSEEK_API_KEY && "deepseek", 
-    process.env.GEMINI_API_KEY && "gemini", 
-    process.env.OPENAI_API_KEY && "openai", 
-    process.env.OPENROUTER_API_KEY && "openrouter", 
+    process.env.ANTHROPIC_API_KEY && "anthropic",
+    process.env.DEEPSEEK_API_KEY && "deepseek",
+    process.env.GEMINI_API_KEY && "gemini",
+    process.env.OPENAI_API_KEY && "openai",
+    process.env.OPENROUTER_API_KEY && "openrouter",
     process.env.XAI_API_KEY && "xai"
   ].filter(Boolean))("should have models from %s", (apiKey) => {
     const models = availableModels.filter(model => model.id.endsWith(`@${apiKey}`));
@@ -112,7 +112,7 @@ describe("Fuzz Testing", () => {
   });
 
   // bun test -t "fuzztest" --rerun-each 10
-  test.skip('fuzztest', async () => {
+  test('fuzztest', async () => {
     const model = availableModels[Math.floor(Math.random() * availableModels.length)];
     if (!model) throw new Error("No models available");
     const { messages, params } = generateRandomSetup();
@@ -143,17 +143,23 @@ describe("Fuzz Testing", () => {
   });
 });
 
-function saveTestCaseError(model: OpenAI.Models.Model, error: unknown, requestParams: OpenAI.Chat.Completions.ChatCompletionCreateParams, response: OpenAI.Chat.Completions.ChatCompletion | null) {
-  const stripAnsi = (str: string | undefined) => str?.replace(/\u001b\[[0-9;]+m/g, '');
+const saveTestCaseError = (model: OpenAI.Models.Model, error: unknown, requestParams: OpenAI.Chat.Completions.ChatCompletionCreateParams, response: OpenAI.Chat.Completions.ChatCompletion | null) => {
+  const serializableError = (error: unknown) => {
+    const stripAnsi = (str: unknown) => typeof str === 'string' ? str.replace(/\u001b\[[0-9;]+m/g, '') : str;
+    const entries = Object.getOwnPropertyNames(error)
+      .map(key => [key, stripAnsi((error as any)[key])])
+      .filter(([key, value]) => value !== undefined)
+    const reconstructed = Object.fromEntries(entries);
+    return reconstructed;
+  }
+
   const dirPath = path.join(__dirname, "failed-test-cases");
   const fileName = `${model.id.replace(/[^a-zA-Z0-9]/g, "_")}_${Date.now()}.json`;
   if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
-  const errorKeyNames = Object.getOwnPropertyNames(error);
-  const errorObject = Object.fromEntries(errorKeyNames.map(key => [key, typeof(error as any)[key] === 'string' ? stripAnsi((error as any)[key]) : (error as any)[key]]));
-  console.log(errorObject);
-  fs.writeFileSync(path.join(dirPath, fileName), JSON.stringify({
-    errorObject,
-    requestParams,
-    response,
-  }, null, 2));
+  fs.writeFileSync(
+    path.join(dirPath, fileName),
+    JSON.stringify({ error: serializableError(error), requestParams, response }, null, 2)
+  );
 }
+
+
