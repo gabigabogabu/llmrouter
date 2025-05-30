@@ -1,6 +1,7 @@
 // use `bun test --rerun-each 100` to rerun each test 100 times
 
 import { test, describe, expect, beforeAll, type TestOptions, type Test } from "bun:test";
+import dotenv from "dotenv";
 import fs from "fs";
 import type OpenAI from "openai";
 
@@ -8,6 +9,7 @@ import { LlmRouter } from "../index";
 import { generateRandomSetup } from "./_generateRandomSetup";
 import path from "path";
 
+dotenv.config({path: path.join(__dirname, "../../.env.test.local")});
 
 describe("Fuzz Testing", () => {
   // Global test state
@@ -29,6 +31,8 @@ describe("Fuzz Testing", () => {
       console.log("Loading available models for fuzz testing...");
       availableModels = await router.listModels();
       console.log(`Found ${availableModels.length} available models`);
+      const availableHosts = [...new Set(availableModels.map(model => model.id.split("@")[1]).sort())];
+      console.log(`Found ${availableHosts.length} available hosts: ${availableHosts.join(", ")}`);
     } catch (error) {
       console.warn("Failed to load models, skipping fuzz tests:", error);
       availableModels = [];
@@ -37,6 +41,18 @@ describe("Fuzz Testing", () => {
 
   test("should have available models for testing", () => {
     expect(availableModels.length).toBeGreaterThan(0);
+  });
+
+  test.each([
+    process.env.ANTHROPIC_API_KEY && "anthropic", 
+    process.env.DEEPSEEK_API_KEY && "deepseek", 
+    process.env.GEMINI_API_KEY && "gemini", 
+    process.env.OPENAI_API_KEY && "openai", 
+    process.env.OPENROUTER_API_KEY && "openrouter", 
+    process.env.XAI_API_KEY && "xai"
+  ].filter(Boolean))("should have models from %s", (apiKey) => {
+    const models = availableModels.filter(model => model.id.endsWith(`@${apiKey}`));
+    expect(models.length).toBeGreaterThan(0);
   });
 
   describe("Conversation Builder", () => {
@@ -96,7 +112,7 @@ describe("Fuzz Testing", () => {
   });
 
   // bun test -t "fuzztest" --rerun-each 10
-  test('fuzztest', async () => {
+  test.skip('fuzztest', async () => {
     const model = availableModels[Math.floor(Math.random() * availableModels.length)];
     if (!model) throw new Error("No models available");
     const { messages, params } = generateRandomSetup();

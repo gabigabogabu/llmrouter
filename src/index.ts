@@ -35,7 +35,7 @@ export class LlmRouter implements LlmHostAdapter {
     geminiApiKey && (this.clients.gemini = new OpenaiAdapter({ ...otherOptions, apiKey: geminiApiKey, baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/" }));
     openaiApiKey && (this.clients.openai = new OpenaiAdapter({ ...otherOptions, apiKey: openaiApiKey }));
     openrouterApiKey && (this.clients.openrouter = new OpenaiAdapter({ ...otherOptions, apiKey: openrouterApiKey, baseURL: "https://openrouter.ai/api/v1" }));
-    xaiApiKey && (this.clients.xai = new OpenaiAdapter({ ...otherOptions, apiKey: xaiApiKey, baseURL: "https://api.xai.ai/v1" }));
+    xaiApiKey && (this.clients.xai = new OpenaiAdapter({ ...otherOptions, apiKey: xaiApiKey, baseURL: "https://api.x.ai/v1" }));
   }
 
   /**
