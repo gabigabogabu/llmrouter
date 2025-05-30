@@ -158,7 +158,7 @@ const saveTestCaseError = (model: OpenAI.Models.Model, error: unknown, requestPa
   if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
   fs.writeFileSync(
     path.join(dirPath, fileName),
-    JSON.stringify({ error: serializableError(error), requestParams, response }, null, 2)
+    JSON.stringify({ model: model.id, error: serializableError(error), requestParams, response }, null, 2)
   );
 }
 
