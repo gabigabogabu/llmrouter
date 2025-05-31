@@ -6,7 +6,8 @@ export class OpenaiAdapter implements LlmHostAdapter {
   private client: OpenAI;
 
   private _modelBlocklist: string[] = [
-    'codex-mini-latest' // does not support chat completions
+    'codex-mini-latest', // does not support chat completions
+    'omni-moderation-2024-09-26', // does not support chat completions
   ];
 
   constructor(params: ClientOptions) {

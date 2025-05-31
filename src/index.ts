@@ -7,7 +7,7 @@ import { HostNotFoundError, ModelNotFoundError } from "./errors";
 
 const hosts = ["anthropic", "deepseek", "gemini", "openai", "openrouter", "xai"] as const;
 type LlmHost = (typeof hosts)[number];
-type LlmRouterClientOptions = Omit<ClientOptions, "apiKey" | "baseUrl"> & {[K in LlmHost as `${K}ApiKey`]: string | undefined;};
+type LlmRouterClientOptions = Omit<ClientOptions, "apiKey" | "baseUrl"> & {[K in LlmHost as `${K}ApiKey`]?: string | undefined;};
 
 
 export class LlmRouter implements LlmHostAdapter {
