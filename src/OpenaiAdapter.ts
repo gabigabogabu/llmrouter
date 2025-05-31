@@ -24,6 +24,10 @@ export class OpenaiAdapter implements LlmHostAdapter {
   }
 
   async chat(...params: Parameters<typeof OpenAI.prototype.chat.completions.create>): Promise<ReturnType<typeof OpenAI.prototype.chat.completions.create>> {
+    if (params[0].model === 'gpt-4o-mini-search-preview') {
+      // Model incompatible request argument supplied: presence_penalty
+      params[0].presence_penalty = undefined;
+    }
     return await this.client.chat.completions.create(...params);
   }
 }
