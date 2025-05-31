@@ -54,10 +54,10 @@ const getRandomElement = <T>(array: T[]): T => {
   return array[Math.floor(Math.random() * array.length)]!;
 }
 
-const randomBetween = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
+const randomBetween = (min: number, max: number): number => Math.random() * (max - min) + min;
 
 const generateRandomConversation = (): OpenAI.Chat.Completions.ChatCompletionMessageParam[] => {
-  const messageCount = randomBetween(1, 5);
+  const messageCount = Math.floor(randomBetween(1, 6));
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
 
   const roles = ["user", "assistant", "system"] as const
@@ -86,7 +86,7 @@ const generateRandomParams = (): Partial<OpenAI.Chat.Completions.ChatCompletionC
   const params: Partial<OpenAI.Chat.Completions.ChatCompletionCreateParams> = {};
   if (Math.random() < 0.3) params.temperature = randomBetween(0, 2);
   if (Math.random() < 0.2) {
-    const maxTokens = randomBetween(10, 1000);
+    const maxTokens = Math.floor(randomBetween(10, 1000));
     if (Math.random() < 0.5) params.max_completion_tokens = maxTokens;
     else params.max_tokens = maxTokens;
   }

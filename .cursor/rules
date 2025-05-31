@@ -1,0 +1,2 @@
+Do not use the `any` type unless absolutely necessary.
+Use `bun`.

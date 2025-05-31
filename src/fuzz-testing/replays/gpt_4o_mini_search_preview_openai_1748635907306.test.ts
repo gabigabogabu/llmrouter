@@ -2,7 +2,6 @@
 
 import { test, describe, expect, beforeAll } from "bun:test";
 import dotenv from "dotenv";
-import fs from "fs";
 import type OpenAI from "openai";
 
 import { LlmRouter } from "../../index";

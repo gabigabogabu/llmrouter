@@ -1,6 +1,6 @@
 // use `bun test --rerun-each 100` to rerun each test 100 times
 
-import { test, describe, expect, beforeAll, type TestOptions, type Test } from "bun:test";
+import { test, describe, expect, beforeAll } from "bun:test";
 import dotenv from "dotenv";
 import fs from "fs";
 import type OpenAI from "openai";
