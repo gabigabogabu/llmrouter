@@ -28,6 +28,12 @@ export class OpenaiAdapter implements LlmHostAdapter {
       // Model incompatible request argument supplied: presence_penalty
       params[0].presence_penalty = undefined;
     }
+    if (params[0].model === 'o1-mini') {
+      // Unsupported value: 'messages[0].role' does not support 'system' with this model.
+      params[0].messages = params[0].messages.map(message => message.role === 'system' ? { ...message, role: 'user' } : message);
+      // Unsupported value: 'temperature' does not support 2 with this model. Only the default (1) value is supported.
+      params[0].temperature && (params[0].temperature = 1);
+    }
     return await this.client.chat.completions.create(...params);
   }
 }
